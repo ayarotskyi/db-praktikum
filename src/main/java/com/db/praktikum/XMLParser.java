@@ -18,6 +18,7 @@ public class XMLParser {
             String password = "dbpraktikum25";
             String filePath = "src/dresden.xml";
 
+            //
 
             // Create DocumentBuilderFactory and DocumentBuilder
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
