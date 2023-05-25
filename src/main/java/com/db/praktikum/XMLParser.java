@@ -47,7 +47,8 @@ public class XMLParser {
             conn.close();
             System.out.println("Data insertion completed.");
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+
         }
     }
 
