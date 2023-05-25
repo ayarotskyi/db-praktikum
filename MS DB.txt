@@ -1,0 +1,163 @@
+CREATE TABLE Product (
+  ProductAsin VARCHAR(255) PRIMARY KEY,
+  Title VARCHAR(255) NOT NULL,
+  Salesrank INT NOT NULL,
+  Bild VARCHAR(255),
+  Rating FLOAT
+);
+
+
+CREATE TABLE ProductInFilliale (
+  FName VARCHAR(255) NOT NULL,
+  FStreet VARCHAR(255) NOT NULL,
+  FZip VARCHAR(10) NOT NULL,
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  IState VARCHAR(255) NOT NULL,
+  Price VARCHAR(255),
+  Avail BOOLEAN NOT NULL,
+  PRIMARY KEY (ProductAsin, FName, FStreet, FZip)
+);
+
+ALTER TABLE ProductInFilliale
+ADD CONSTRAINT unique_Filliale UNIQUE (FName, FStreet, FZip);
+
+
+CREATE TABLE Book (
+  BookAsin VARCHAR(255) PRIMARY KEY,
+  Releasedate DATE NOT NULL CHECK (Releasedate <= CURRENT_DATE),
+  Pages INT NOT NULL,
+  ISBN VARCHAR(255) NOT NULL,
+  FOREIGN KEY (BookAsin) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE DVD (
+  DVDAsin VARCHAR(255) PRIMARY KEY,
+  Format VARCHAR(255) NOT NULL,
+  Runtime INT NOT NULL,
+  RegionCode VARCHAR(255) NOT NULL,
+  FOREIGN KEY (DVDAsin) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE	
+
+);
+
+
+CREATE TABLE Music (
+  MusicAsin VARCHAR(255) PRIMARY KEY,	
+  Releasedate DATE NOT NULL CHECK (Releasedate <= CURRENT_DATE),
+  FOREIGN KEY (MusicAsin) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE ArtistToMusic (
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  artistName VARCHAR(255),
+  PRIMARY KEY (MusicAsin, artistName)
+);
+
+
+CREATE TABLE LabelToMusic (
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  labelName VARCHAR(255),
+  PRIMARY KEY (MusicAsin, labelName)
+);
+
+
+CREATE TABLE TrackToMusic (
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  trackName VARCHAR(255),
+  PRIMARY KEY (MusicAsin, trackName)
+);
+
+
+CREATE TABLE AuthorToBook (
+  BookAsin VARCHAR(255) REFERENCES Book (BookAsin),
+  authorName VARCHAR(255),
+  PRIMARY KEY (BookAsin, authorName)
+);
+
+
+CREATE TABLE PublisherToBook (
+  BookAsin VARCHAR(255) REFERENCES Book (BookAsin),
+  publisherName VARCHAR(255),
+  PRIMARY KEY (BookAsin, publisherName)
+);
+
+
+CREATE TABLE ActorToDVD (
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  actorName VARCHAR(255),
+  PRIMARY KEY (DVDAsin, actorName)
+);
+
+
+CREATE TABLE CreatorToDVD (
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  creatorName VARCHAR(255),
+  PRIMARY KEY (DVDAsin, creatorName)
+);
+
+
+CREATE TABLE DirectorToDVD (
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  directorName VARCHAR(255),
+  PRIMARY KEY (DVDAsin, directorName)
+);
+
+
+CREATE TABLE Category (
+  categoryKey VARCHAR(255) PRIMARY KEY,
+  categoryName VARCHAR(255) NOT NULL,
+  parentCategory VARCHAR(255) REFERENCES Category(categoryKey)
+);
+
+
+CREATE TABLE ProductToCategory (
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  categoryKey VARCHAR(255) REFERENCES Category (categoryKey),
+  PRIMARY KEY (ProductAsin, categoryKey)
+);
+
+
+CREATE TABLE SimilarProduct (
+  Pnummer1 VARCHAR(255) REFERENCES Product (ProductAsin),
+  Pnummer2 VARCHAR(255) REFERENCES Product (ProductAsin),
+  PRIMARY KEY (Pnummer1, Pnummer2),
+  CHECK (Pnummer1 <> Pnummer2)
+);
+
+
+CREATE TABLE Kunde (
+  Username VARCHAR(255) PRIMARY KEY
+);
+
+
+CREATE TABLE KaufKunde (
+  Username VARCHAR(255) PRIMARY KEY,
+  Kontonummer VARCHAR(255) NOT NULL,
+  Strasse VARCHAR(255) NOT NULL,
+  Hausnummer VARCHAR(10) NOT NULL,
+  Stadt VARCHAR(255) NOT NULL,
+  Plz VARCHAR(10) NOT NULL,
+  UsernameKunde VARCHAR(255) REFERENCES Kunde (Username)
+);
+
+CREATE TABLE Kauf (
+  Username VARCHAR(255) REFERENCES KaufKunde (Username),
+  FName VARCHAR(255),
+  FStreet VARCHAR(255),
+  FZip VARCHAR(255),
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  Datum TIMESTAMP NOT NULL CHECK (Datum <= CURRENT_TIMESTAMP),
+  PRIMARY KEY (Username, Datum, ProductAsin),
+  FOREIGN KEY (FName, FStreet, FZip) REFERENCES ProductInFilliale (FName, FStreet, FZip)
+);
+
+
+
+CREATE TABLE Feedback (
+  Username VARCHAR(255) REFERENCES Kunde (Username),
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  Rating INT NOT NULL,
+  fMessage TEXT NOT NULL,
+  PRIMARY KEY (Username, ProductAsin)
+);

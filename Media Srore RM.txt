@@ -1,0 +1,48 @@
+Product(ProductAsin:PK, Title, Salesrank, Bild, Rating)
+
+ProductInFilliale ((ProductAsin, FName, FStreet, FZip):PK, State, Price, Avail, ProductAsin:FK REF Product(ProductAsin))
+
+Book (BookAsin:PK, ReleaseDate, Pages, ISBN, BookAsin:FK REF Product(ProductAsin))
+
+DVD (DVDAsin:PK, Format, Runtime, RegionCode, DVDAsin:FK REF Product(ProductAsin))
+
+Music(MusicAsin:PK, Releasedate, MusicAsin:FK REF Product(ProductAsin))
+
+AuthorToBook ((BookAsin, AuthorName):PK, BookAsin:FK REF Book(BookAsin))
+
+PublisherToBook ((BookAsin, PublisherName):PK, BookAsin:FK REF Book(BookAsin))
+
+ActorToDVD((DVDAsin, ActorName):PK, DVDAsin:FK REF DVD(DVDAsin))
+
+CreatorToDVD((DVDAsin, CreatorName):PK, DVDAsin:FK REF DVD(DVDAsin))
+
+DirectorToDVD((DVDAsin, DirectorName):PK, DVDAsin:FK REF DVD(DVDAsin))
+
+ArtistToMusic ((MusicAsin, ArtistName):PK, MusicAsin:FK REF Music(MusicAsin))
+
+LabelToMusic ((MusicAsin, LabelName):PK, MusicAsin:FK REF Music(MusicAsin))
+
+TrackToMusic ((MusicAsin, TrackName):PK, MusicAsin:FK REF Music(MusicAsin))
+
+CreatorToMusic ?
+
+
+
+
+
+
+Category(CID:PK, Name, ParentCategory, ParentCateegory:FK REF Category(CID))
+
+ProductToCategory((Pnummer, CID):PK, CID:FK REF Category(CID), Pnummer:FK REF Product(Pnummer))
+
+SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(Pnummer), Pnummer2:FK REF Product(Pnummer))
+
+Kunde(Username:PK)
+
+KaufKunde(Username: PK, Kontonummer, Strasse, Hausnummer, Stadt, Plz, Username:FK REF Kunde(Username))
+
+Kauf((Username, FID, Pnummer):PK, Datum, Username:FK REF KaufKunde(Username),
+      FID:FK REF Filliale(FID), Pnummer:FK REF Product(Pnummer))
+
+
+Feedback((Username, Pnummer):PK, Rating, Message, Username:FK REF Kunde(Username), Pnummer:FK REF Product(Pnummer))
