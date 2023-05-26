@@ -4,7 +4,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import com.db.praktikum.utils.CategoriesParser;
+import com.db.praktikum.utils.AttributeNotFoundException;
 import com.db.praktikum.utils.ErrorHandler;
 import com.db.praktikum.utils.FeedbackParser;
 
@@ -32,6 +32,9 @@ public class XMLParser {
             parseStore(connection, "src/leipzig.xml");
             parseStore(connection, "src/dresden.xml");
 
+            parseSimilars(connection, "src/leipzig.xml");
+            parseSimilars(connection, "src/dresden.xml");
+
             // CategoriesParser.parseCategories(connection);
 
             FeedbackParser.parse(connection);
@@ -44,7 +47,7 @@ public class XMLParser {
         }
     }
 
-    private static void parseStore(Connection connection, String filePath) throws Exception {
+    private static void parseStore(Connection connection, String filePath){
         try {
             // Create DocumentBuilderFactory and DocumentBuilder
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -94,6 +97,32 @@ public class XMLParser {
         }
     }
 
+    private static void parseSimilars(Connection connection, String filePath){
+
+        try {
+            // Create DocumentBuilderFactory and DocumentBuilder
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(new File(filePath));
+
+            Element shopElement = document.getDocumentElement();
+            NodeList itemNodeList = shopElement.getElementsByTagName("item");
+
+
+            for (int i = 0; i < itemNodeList.getLength(); i++) {
+
+                Element itemElement = (Element) itemNodeList.item(i);
+                insertSimilars(connection, itemElement);
+
+            }
+
+            System.out.println("Data from " + filePath + " inserted to SimilarProducts successfully.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void executeStartupSql(Connection connection) throws Exception {
         String sqlScriptFile = "initial.sql";
         Statement statement = connection.createStatement();
@@ -131,7 +160,7 @@ public class XMLParser {
         }
     }
 
-    private static void insertProduct(Connection connection, Element itemElement) throws SQLException {
+    private static void insertProduct(Connection connection, Element itemElement) throws Exception {
 
         // For Dresden.xml check
         if (itemElement.getAttributes().getLength() < 3)
@@ -155,8 +184,7 @@ public class XMLParser {
         if (titelElement != null) {
             titel = titelElement.getTextContent();
         } else {
-            // System.out.println("Missing Title");
-            return;
+            throw new AttributeNotFoundException("Title");
         }
 
         // SalesRank check
@@ -165,8 +193,7 @@ public class XMLParser {
             salesrank = Integer.parseInt(salesrankAttr);
 
         } else {
-            // System.out.println("Missing Salesrank");
-            return;
+            throw new AttributeNotFoundException("Salesrank");
         }
 
         // Inserting Query
@@ -179,11 +206,10 @@ public class XMLParser {
             statement.executeUpdate();
         } catch (SQLException e) {
             throw e;
-            // System.out.println(e.getMessage());
         }
     }
 
-    private static void insertProductInFilliale(Connection connection, Element itemElement) {
+    private static void insertProductInFilliale(Connection connection, Element itemElement) throws Exception {
 
         // For Dresden.xml
         if (itemElement.getAttributes().getLength() < 3)
@@ -201,8 +227,7 @@ public class XMLParser {
         if (!priceElement.getAttribute("state").isEmpty()) {
             state = priceElement.getAttribute("state");
         } else {
-            // System.out.println("Missing state");
-            return;
+            throw new AttributeNotFoundException("State");
         }
 
         // Calculating Price
@@ -235,11 +260,11 @@ public class XMLParser {
             statement.setBoolean(7, avail);
             statement.executeUpdate();
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
     }
 
-    private static void insertBook(Connection connection, Element itemElement) {
+    private static void insertBook(Connection connection, Element itemElement) throws Exception {
 
         // For Dresden.xml
         if (itemElement.getAttributes().getLength() < 3)
@@ -267,8 +292,7 @@ public class XMLParser {
                 isbn = isbnElement.getAttribute("val");
             }
             if (isbn.isEmpty()) {
-                // System.out.println("Missing isbn");
-                return;
+                throw new AttributeNotFoundException("ISBN");
             }
 
             // Checking publication
@@ -278,8 +302,7 @@ public class XMLParser {
                 publicationDate = publicationElement.getAttribute("date");
             }
             if (publicationDate.isEmpty()) {
-                // System.out.println("Missing publicationDate");
-                return;
+                throw new AttributeNotFoundException("PublicationDate");
             }
 
             // Checking pages
@@ -291,8 +314,7 @@ public class XMLParser {
                     pages = Integer.parseInt(pagesValue);
                 }
                 if (pages == null) {
-                    // System.out.println("Missing pages");
-                    return;
+                    throw new AttributeNotFoundException("Pages");
                 }
             }
         }
@@ -300,15 +322,13 @@ public class XMLParser {
         // Checking publisher
         NodeList publisherList = itemElement.getElementsByTagName("publisher");
         if (publisherList.getLength() == 0) {
-            // System.out.println("Missing Publisher");
-            return;
+            throw new AttributeNotFoundException("PublisherName");
         }
 
         // Checking author
         NodeList authorList = itemElement.getElementsByTagName("author");
         if (authorList.getLength() == 0) {
-            // System.out.println("Missing author");
-            return;
+            throw new AttributeNotFoundException("AuthorName");
         }
 
         // Insert into Book Table
@@ -320,7 +340,7 @@ public class XMLParser {
             statement.setInt(4, pages);
             statement.executeUpdate();
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         // Insert into PublisherToBook Table
@@ -345,7 +365,7 @@ public class XMLParser {
 
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         // Insert into AuthorToBook Table
@@ -370,11 +390,11 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
     }
 
-    private static void insertMusic(Connection connection, Element itemElement) {
+    private static void insertMusic(Connection connection, Element itemElement) throws Exception{
 
         // For Dresden.xml
         if (itemElement.getAttributes().getLength() < 3)
@@ -403,30 +423,30 @@ public class XMLParser {
             }
         }
         if (releaseDate.isEmpty()) {
-            // System.out.println("Missing releaseDate");
-            return;
+            throw new AttributeNotFoundException("ReleaseDate");
         }
 
         // Checking label
         NodeList labelList = itemElement.getElementsByTagName("label");
         if (labelList.getLength() == 0) {
-            // System.out.println("Missing Label");
-            return;
+            throw new AttributeNotFoundException("LabelName");
         }
 
         // Checking title
-        NodeList tracksList = itemElement.getElementsByTagName("title");
+        Element tracks = (Element) itemElement.getElementsByTagName("tracks").item(0);
+        NodeList tracksList = tracks.getElementsByTagName("title");
         if (tracksList.getLength() == 0) {
-            // System.out.println("Missing Tracks");
-            return;
+            throw new AttributeNotFoundException("TrackTitle");
         }
+
 
         // Checking artist
         NodeList artistList = itemElement.getElementsByTagName("artist");
         if (artistList.getLength() == 0) {
-            // System.out.println("Missing Artist");
-            return;
+            throw new AttributeNotFoundException("ArtistName");
         }
+
+
 
         // Insert into Music table
         String query = "INSERT INTO Music (MusicAsin, Releasedate) VALUES (?, ?)";
@@ -435,7 +455,7 @@ public class XMLParser {
             statement.setDate(2, Date.valueOf(releaseDate));
             statement.executeUpdate();
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         // Insert into LabelToMusic table
@@ -460,7 +480,7 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         // Insert into TracksToMusic table
@@ -476,7 +496,7 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         // Insert into ArtistToMusic table
@@ -501,11 +521,39 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
+        }
+
+        // Insert into CreatorToMusic table
+        NodeList creatorList = itemElement.getElementsByTagName("creator");
+        if(creatorList.getLength() != 0){
+            String creatorQuery = "INSERT INTO CreatorToMusic (MusicAsin, creatorName) VALUES (?, ?)";
+            try (PreparedStatement creatorStatement = connection.prepareStatement(creatorQuery);) {
+                for (int i = 0; i < creatorList.getLength(); i++) {
+
+                    String creatorName;
+                    Element creatorElement = (Element) creatorList.item(i);
+
+                    // Difference between Dresden and Leipzig artist data structure
+                    if (creatorElement.getAttributes().getLength() != 0) {
+                        creatorName = creatorElement.getAttribute("name");
+                    } else {
+                        creatorName = creatorElement.getTextContent();
+                    }
+
+                    if (!creatorName.isEmpty()) {
+                        creatorStatement.setString(1, asin);
+                        creatorStatement.setString(2, creatorName);
+                        creatorStatement.executeUpdate();
+                    }
+                }
+            } catch (SQLException e) {
+                ErrorHandler.handleError(connection, "Music", e);
+            }
         }
     }
 
-    private static void insertDVD(Connection connection, Element itemElement) {
+    private static void insertDVD(Connection connection, Element itemElement) throws Exception {
 
         // For Dresden.xml
         if (itemElement.getAttributes().getLength() < 3)
@@ -528,7 +576,6 @@ public class XMLParser {
         if (dvdspecList.getLength() > 0) {
             dvdspecElement = (Element) dvdspecList.item(0);
         }
-
         if (dvdspecElement != null) {
 
             // Checking format
@@ -537,8 +584,7 @@ public class XMLParser {
                 format = formatList.item(0).getTextContent();
             }
             if (format.isEmpty()) {
-                // System.out.println("Missing Format");
-                return;
+                throw new AttributeNotFoundException("Format");
             }
 
             // Checking RegionCode
@@ -547,8 +593,7 @@ public class XMLParser {
                 regionCode = regionCodeList.item(0).getTextContent();
             }
             if (regionCode.isEmpty()) {
-                // System.out.println("Missing Regioncode");
-                return;
+                throw new AttributeNotFoundException("Regioncode");
             }
 
             // Checking Runtime
@@ -559,8 +604,7 @@ public class XMLParser {
                     runningTime = Integer.parseInt(runningTimeStr);
                 }
                 if (runningTime == null) {
-                    // System.out.println("Missing Runtime");
-                    return;
+                    throw new AttributeNotFoundException("Runtime");
                 }
             }
         }
@@ -573,7 +617,7 @@ public class XMLParser {
             statement.setInt(4, runningTime);
             statement.executeUpdate();
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            throw e;
         }
 
         NodeList actorList = itemElement.getElementsByTagName("actor");
@@ -597,7 +641,7 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            ErrorHandler.handleError(connection, "DVD", e);
         }
 
         NodeList directorList = itemElement.getElementsByTagName("director");
@@ -621,7 +665,7 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            ErrorHandler.handleError(connection, "DVD", e);
         }
 
         NodeList creatorList = itemElement.getElementsByTagName("creator");
@@ -646,7 +690,46 @@ public class XMLParser {
                 }
             }
         } catch (SQLException e) {
-            // System.out.println(e.getMessage());
+            ErrorHandler.handleError(connection, "DVD", e);
+        }
+    }
+
+    private static void insertSimilars(Connection connection, Element itemElement){
+
+        String asin = itemElement.getAttribute("asin");
+
+
+        NodeList similarsList = itemElement.getElementsByTagName("similars");
+        if(similarsList.getLength() > 0) {
+            Element similarsElement = (Element) similarsList.item(0);
+            NodeList itemInSimilarsDresdenList = similarsElement.getElementsByTagName("item");
+            NodeList itemInSimilarsLeipzigList = similarsElement.getElementsByTagName("sim_product");
+
+
+            String similarsQuery = "INSERT INTO SimilarProduct (Pnummer1, Pnummer2) VALUES (?, ?)";
+            try (PreparedStatement similarsStatement = connection.prepareStatement(similarsQuery)) {
+
+                if (itemInSimilarsDresdenList.getLength() > 0) {
+                    for (int i = 0; i < itemInSimilarsDresdenList.getLength(); i++) {
+                        Element itemInSimilarsElementDresden = (Element) itemInSimilarsDresdenList.item(i);
+                        String similarAsinDresden = itemInSimilarsElementDresden.getAttribute("asin");
+                        similarsStatement.setString(1, asin);
+                        similarsStatement.setString(2, similarAsinDresden);
+                        similarsStatement.executeUpdate();
+                    }
+                }
+                if (itemInSimilarsLeipzigList.getLength() > 0) {
+                    for (int i = 0; i < itemInSimilarsLeipzigList.getLength(); i++) {
+                        Element itemInSimilarsElementLeipzig = (Element) itemInSimilarsLeipzigList.item(i);
+                        String similarAsinLeipzig = itemInSimilarsElementLeipzig.getElementsByTagName("asin").item(0).getTextContent();
+                        similarsStatement.setString(1, asin);
+                        similarsStatement.setString(2, similarAsinLeipzig);
+                        similarsStatement.executeUpdate();
+                    }
+                }
+            } catch (SQLException e) {
+                ErrorHandler.handleError(connection, "SimilarProduct", e);
+            }
         }
     }
 
