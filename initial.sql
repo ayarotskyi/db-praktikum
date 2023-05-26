@@ -1,3 +1,9 @@
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
 CREATE TABLE Filliale(
   FName VARCHAR(255),
   FStreet VARCHAR(255),
@@ -11,8 +17,7 @@ CREATE TABLE Product (
   ProductAsin VARCHAR(255) PRIMARY KEY,
   Title VARCHAR(255) NOT NULL,
   Salesrank INT NOT NULL,
-  Bild VARCHAR(255),
-  Rating FLOAT
+  Bild VARCHAR(255)
 );
 
 
@@ -114,16 +119,16 @@ CREATE TABLE DirectorToDVD (
 
 
 CREATE TABLE Category (
-  categoryKey VARCHAR(255) PRIMARY KEY,
+  Id SERIAL PRIMARY KEY,
   categoryName VARCHAR(255) NOT NULL,
-  parentCategory VARCHAR(255) REFERENCES Category(categoryKey)
+  parentCategory INTEGER REFERENCES Category(Id)
 );
 
 
 CREATE TABLE ProductToCategory (
   ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
-  categoryKey VARCHAR(255) REFERENCES Category (categoryKey),
-  PRIMARY KEY (ProductAsin, categoryKey)
+  categoryId INTEGER REFERENCES Category (id),
+  PRIMARY KEY (ProductAsin, categoryId)
 );
 
 
@@ -136,22 +141,13 @@ CREATE TABLE SimilarProduct (
 
 
 CREATE TABLE Kunde (
-  Username VARCHAR(255) PRIMARY KEY
-);
-
-
-CREATE TABLE KaufKunde (
   Username VARCHAR(255) PRIMARY KEY,
-  Kontonummer VARCHAR(255) NOT NULL,
-  Strasse VARCHAR(255) NOT NULL,
-  Hausnummer VARCHAR(10) NOT NULL,
-  Stadt VARCHAR(255) NOT NULL,
-  Plz VARCHAR(10) NOT NULL,
-  UsernameKunde VARCHAR(255) REFERENCES Kunde (Username)
+  Kontonummer VARCHAR(255),
+  Lieferadresse VARCHAR(255)
 );
 
 CREATE TABLE Kauf (
-  Username VARCHAR(255) REFERENCES KaufKunde (Username),
+  Username VARCHAR(255) REFERENCES Kunde (Username),
   FName VARCHAR(255),
   FStreet VARCHAR(255),
   FZip VARCHAR(255),
@@ -166,7 +162,20 @@ CREATE TABLE Kauf (
 CREATE TABLE Feedback (
   Username VARCHAR(255) REFERENCES Kunde (Username),
   ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
-  Rating INT NOT NULL,
+  Rating INT NOT NULL CHECK (Rating >= 1 AND Rating <= 5),
   fMessage TEXT NOT NULL,
   PRIMARY KEY (Username, ProductAsin)
 );
+
+CREATE TABLE GuestFeedback (
+  Id SERIAL PRIMARY KEY,
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  Rating INT NOT NULL,
+  fMessage TEXT NOT NULL
+);
+
+CREATE TABLE Error (
+  Id SERIAL PRIMARY KEY,
+  EntityName TEXT NOT NULL,
+  ErrorMessage TEXT NOT NULL
+)
