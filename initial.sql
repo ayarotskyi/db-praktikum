@@ -69,6 +69,13 @@ CREATE TABLE ArtistToMusic (
 );
 
 
+CREATE TABLE CreatorToMusic (
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  creatorName VARCHAR(255),
+  PRIMARY KEY (MusicAsin, creatorName)
+);
+
+
 CREATE TABLE LabelToMusic (
   MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
   labelName VARCHAR(255),
@@ -178,4 +185,44 @@ CREATE TABLE Error (
   Id SERIAL PRIMARY KEY,
   EntityName TEXT NOT NULL,
   ErrorMessage TEXT NOT NULL
-)
+);
+
+--Calculating Rating
+ALTER TABLE Product ADD COLUMN Rating DECIMAL(4,2);
+
+
+CREATE OR REPLACE FUNCTION updateProductRating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE Product
+  SET Rating = (
+    SELECT AVG(rating)
+    FROM (
+      SELECT rating
+      FROM Feedback
+      WHERE ProductAsin = NEW.ProductAsin
+      UNION ALL
+      SELECT rating
+      FROM GuestFeedback
+      WHERE ProductAsin = NEW.ProductAsin
+    ) AS subquery
+  )
+  WHERE ProductAsin = NEW.ProductAsin;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE TRIGGER update_product_rating
+AFTER INSERT OR UPDATE ON Feedback
+FOR EACH ROW
+EXECUTE FUNCTION updateProductRating();
+
+
+CREATE TRIGGER update_product_rating_guest
+AFTER INSERT OR UPDATE ON GuestFeedback
+FOR EACH ROW
+EXECUTE FUNCTION updateProductRating();
+

@@ -20,29 +20,26 @@ DirectorToDVD((DVDAsin, DirectorName):PK, DVDAsin:FK REF DVD(DVDAsin))
 
 ArtistToMusic ((MusicAsin, ArtistName):PK, MusicAsin:FK REF Music(MusicAsin))
 
+CreatorToMusic ((MusicAsin, CreatorName):PK, MusicAsin:FK REF Music(MusicAsin))
+
 LabelToMusic ((MusicAsin, LabelName):PK, MusicAsin:FK REF Music(MusicAsin))
 
 TrackToMusic ((MusicAsin, TrackName):PK, MusicAsin:FK REF Music(MusicAsin))
 
-CreatorToMusic ?
+Category(ID:PK, categoryName, ParentCategory, ParentCateegory:FK REF Category(ID))
+
+ProductToCategory(ProductAsin, categoryId):PK, categoryId:FK REF Category(id), ProductAsin:FK REF Product(ProductAsin))
+
+SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(ProductAsin), Pnummer2:FK REF Product(ProductAsin))
+
+Kunde(Username:PK, Kontonummer, Lieferadresse)
+
+Kauf((Username, Datum, ProductAsin):PK, Fname, Fstreet, Fzip, Username:FK REF KaufKunde(Username),
+      (Fname, Fstreet, Fzip):FK REF Filliale(Fname, Fstreet, Fzip), ProductAsin:FK REF Product(ProductAsin))
 
 
+Feedback((Username, ProductAsin):PK, Rating, Message, Username:FK REF Kunde(Username), ProductAsin:FK REF Product(ProductAsin))
 
+GuestFeedback ( ID:PK, ProductAsin, Rating, fMessage ProductAsin:FK REF Product(ProductAsin))
 
-
-
-Category(CID:PK, Name, ParentCategory, ParentCateegory:FK REF Category(CID))
-
-ProductToCategory((Pnummer, CID):PK, CID:FK REF Category(CID), Pnummer:FK REF Product(Pnummer))
-
-SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(Pnummer), Pnummer2:FK REF Product(Pnummer))
-
-Kunde(Username:PK)
-
-KaufKunde(Username: PK, Kontonummer, Strasse, Hausnummer, Stadt, Plz, Username:FK REF Kunde(Username))
-
-Kauf((Username, FID, Pnummer):PK, Datum, Username:FK REF KaufKunde(Username),
-      FID:FK REF Filliale(FID), Pnummer:FK REF Product(Pnummer))
-
-
-Feedback((Username, Pnummer):PK, Rating, Message, Username:FK REF Kunde(Username), Pnummer:FK REF Product(Pnummer))
+Error(Id:PK, EntityName, ErrorMessage)
