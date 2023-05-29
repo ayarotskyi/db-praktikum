@@ -130,6 +130,10 @@ CREATE TABLE Category (
   categoryName VARCHAR(255) NOT NULL,
   parentCategory INTEGER REFERENCES Category(Id)
 );
+CREATE UNIQUE INDEX category_2col_uni_idx ON Category (categoryName, parentCategory)
+WHERE parentCategory IS NOT NULL;
+CREATE UNIQUE INDEX category_1col_uni_idx ON Category (categoryName)
+WHERE parentCategory IS NULL;
 
 
 CREATE TABLE ProductToCategory (
@@ -226,3 +230,12 @@ AFTER INSERT OR UPDATE ON GuestFeedback
 FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
 
+
+DROP VIEW product_rating;
+CREATE VIEW product_rating as (
+  SELECT ProductAsin, AVG(ratings.rating) as rating FROM Product INNER JOIN (
+  	SELECT ProductAsin, rating FROM Feedback UNION (
+  		SELECT ProductAsin,rating FROM guestfeedback
+  	)
+  ) as ratings USING (ProductAsin) GROUP BY ProductAsin
+)

@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,75 +26,103 @@ public class CategoriesParser {
 
             // Get the root element
             Element root = document.getDocumentElement();
-            NodeList categoryNodes = root.getElementsByTagName("category");
+            NodeList immediateChildren = root.getChildNodes();
 
-            insertCategories(categoryNodes, null, connection);
+            List<Element> categories = new ArrayList<>();
+
+            for (int i = 0; i < immediateChildren.getLength(); i++) {
+                Node childNode = immediateChildren.item(i);
+                if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                    Element childElement = (Element) childNode;
+                    categories.add(childElement);
+                    if (childElement.getTagName().equals("category")) {
+                        categories.add(childElement);
+                    }
+                }
+            }
+            System.out.println("Parsing categories:");
+            insertCategories(categories,
+                    null, connection, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        System.out.println();
         System.out.println("Categories parsed.");
-
     }
 
-    private static void insertCategories(NodeList nodes, Integer parentCategory, Connection connection) {
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node node = nodes.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                try {
-                    PreparedStatement categoryStatement = connection.prepareStatement(
-                            "INSERT INTO Category (categoryName, parentCategory) " +
-                                    "VALUES (?, ?)",
-                            Statement.RETURN_GENERATED_KEYS);
+    private static void insertCategories(List<Element> elements, Integer parentCategory, Connection connection,
+            int recursion) {
+        for (int i = 0; i < elements.size(); i++) {
+            if (recursion == 0) {
+                System.out.print("\r" + "Root categories: " + i + " / " + elements.size());
+            }
 
-                    // Prepare statement for product-to-category insertion
-                    PreparedStatement productToCategoryStatement = connection.prepareStatement(
-                            "INSERT INTO ProductToCategory (ProductAsin, categoryId) " +
-                                    "VALUES (?, ?)");
+            Element element = elements.get(i);
 
-                    Element element = (Element) node;
-                    String categoryName = element.getTextContent().trim();
-                    int lineEndIndex = categoryName.indexOf('\n');
-                    if (lineEndIndex != -1) {
-                        categoryName = categoryName.substring(0, lineEndIndex);
-                    }
+            try {
+                PreparedStatement categoryStatement = connection.prepareStatement(
+                        "INSERT INTO Category (categoryName, parentCategory) " +
+                                "VALUES (?, ?)",
+                        Statement.RETURN_GENERATED_KEYS);
 
-                    // Insert category into Category table
-                    categoryStatement.setString(1, categoryName);
-                    categoryStatement.setObject(2, parentCategory);
+                // Prepare statement for product-to-category insertion
+                PreparedStatement productToCategoryStatement = connection.prepareStatement(
+                        "INSERT INTO ProductToCategory (ProductAsin, categoryId) " +
+                                "VALUES (?, ?)");
 
-                    categoryStatement.executeUpdate();
+                String categoryName = element.getTextContent().trim();
+                int lineEndIndex = categoryName.indexOf('\n');
+                if (lineEndIndex != -1) {
+                    categoryName = categoryName.substring(0, lineEndIndex);
+                }
 
-                    ResultSet generatedKeys = categoryStatement.getGeneratedKeys();
+                // Insert category into Category table
+                categoryStatement.setString(1, categoryName);
+                categoryStatement.setObject(2, parentCategory);
 
-                    if (!generatedKeys.next()) {
-                        continue;
-                    }
+                categoryStatement.executeUpdate();
 
-                    int categoryKey = generatedKeys.getInt(1);
+                ResultSet generatedKeys = categoryStatement.getGeneratedKeys();
 
-                    NodeList childNodes = element.getElementsByTagName("category");
-                    if (childNodes.getLength() > 0) {
-                        // Recursive call to insert child categories
-                        insertCategories(childNodes, categoryKey, connection);
-                    } else {
-                        NodeList itemNodes = element.getElementsByTagName("item");
-                        for (int j = 0; j < itemNodes.getLength(); j++) {
-                            Node itemNode = itemNodes.item(j);
-                            if (itemNode.getNodeType() == Node.ELEMENT_NODE) {
-                                String productAsin = itemNode.getTextContent().trim();
+                if (!generatedKeys.next()) {
+                    continue;
+                }
 
-                                // Insert product-to-category mapping into ProductToCategory table
-                                productToCategoryStatement.setString(1, productAsin);
-                                productToCategoryStatement.setInt(2, categoryKey);
-                                productToCategoryStatement.executeUpdate();
-                            }
+                int categoryKey = generatedKeys.getInt(1);
+
+                NodeList immediateChildren = element.getChildNodes();
+                List<Element> categories = new ArrayList<>();
+                List<Element> items = new ArrayList<>();
+
+                for (int j = 0; j < immediateChildren.getLength(); j++) {
+                    Node childNode = immediateChildren.item(j);
+                    if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                        Element childElement = (Element) childNode;
+                        if (childElement.getTagName().equals("category")) {
+                            categories.add(childElement);
+                        } else if (childElement.getTagName().equals("item")) {
+                            items.add(childElement);
                         }
                     }
-                } catch (SQLException e) {
-                    ErrorHandler.handleError(connection, "Category", e);
                 }
+
+                for (int j = 0; j < items.size(); j++) {
+                    Element itemElement = items.get(j);
+                    String productAsin = itemElement.getTextContent().trim();
+
+                    // Insert product-to-category mapping into ProductToCategory table
+                    productToCategoryStatement.setString(1, productAsin);
+                    productToCategoryStatement.setInt(2, categoryKey);
+                    productToCategoryStatement.executeUpdate();
+                }
+
+                insertCategories(categories, categoryKey, connection, recursion + 1);
+
+            } catch (SQLException e) {
+                ErrorHandler.handleError(connection, "Category", e);
             }
+
         }
     }
 }

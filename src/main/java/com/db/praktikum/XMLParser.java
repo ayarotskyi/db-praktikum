@@ -5,6 +5,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.db.praktikum.utils.AttributeNotFoundException;
+import com.db.praktikum.utils.CategoriesParser;
 import com.db.praktikum.utils.ErrorHandler;
 import com.db.praktikum.utils.FeedbackParser;
 
@@ -35,7 +36,7 @@ public class XMLParser {
             parseSimilars(connection, "src/leipzig.xml");
             parseSimilars(connection, "src/dresden.xml");
 
-            // CategoriesParser.parseCategories(connection);
+            CategoriesParser.parseCategories(connection);
 
             FeedbackParser.parse(connection);
 
@@ -47,7 +48,7 @@ public class XMLParser {
         }
     }
 
-    private static void parseStore(Connection connection, String filePath){
+    private static void parseStore(Connection connection, String filePath) {
         try {
             // Create DocumentBuilderFactory and DocumentBuilder
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -97,7 +98,7 @@ public class XMLParser {
         }
     }
 
-    private static void parseSimilars(Connection connection, String filePath){
+    private static void parseSimilars(Connection connection, String filePath) {
 
         try {
             // Create DocumentBuilderFactory and DocumentBuilder
@@ -107,7 +108,6 @@ public class XMLParser {
 
             Element shopElement = document.getDocumentElement();
             NodeList itemNodeList = shopElement.getElementsByTagName("item");
-
 
             for (int i = 0; i < itemNodeList.getLength(); i++) {
 
@@ -394,7 +394,7 @@ public class XMLParser {
         }
     }
 
-    private static void insertMusic(Connection connection, Element itemElement) throws Exception{
+    private static void insertMusic(Connection connection, Element itemElement) throws Exception {
 
         // For Dresden.xml
         if (itemElement.getAttributes().getLength() < 3)
@@ -439,14 +439,11 @@ public class XMLParser {
             throw new AttributeNotFoundException("TrackTitle");
         }
 
-
         // Checking artist
         NodeList artistList = itemElement.getElementsByTagName("artist");
         if (artistList.getLength() == 0) {
             throw new AttributeNotFoundException("ArtistName");
         }
-
-
 
         // Insert into Music table
         String query = "INSERT INTO Music (MusicAsin, Releasedate) VALUES (?, ?)";
@@ -526,7 +523,7 @@ public class XMLParser {
 
         // Insert into CreatorToMusic table
         NodeList creatorList = itemElement.getElementsByTagName("creator");
-        if(creatorList.getLength() != 0){
+        if (creatorList.getLength() != 0) {
             String creatorQuery = "INSERT INTO CreatorToMusic (MusicAsin, creatorName) VALUES (?, ?)";
             try (PreparedStatement creatorStatement = connection.prepareStatement(creatorQuery);) {
                 for (int i = 0; i < creatorList.getLength(); i++) {
@@ -694,17 +691,15 @@ public class XMLParser {
         }
     }
 
-    private static void insertSimilars(Connection connection, Element itemElement){
+    private static void insertSimilars(Connection connection, Element itemElement) {
 
         String asin = itemElement.getAttribute("asin");
 
-
         NodeList similarsList = itemElement.getElementsByTagName("similars");
-        if(similarsList.getLength() > 0) {
+        if (similarsList.getLength() > 0) {
             Element similarsElement = (Element) similarsList.item(0);
             NodeList itemInSimilarsDresdenList = similarsElement.getElementsByTagName("item");
             NodeList itemInSimilarsLeipzigList = similarsElement.getElementsByTagName("sim_product");
-
 
             String similarsQuery = "INSERT INTO SimilarProduct (Pnummer1, Pnummer2) VALUES (?, ?)";
             try (PreparedStatement similarsStatement = connection.prepareStatement(similarsQuery)) {
@@ -721,7 +716,8 @@ public class XMLParser {
                 if (itemInSimilarsLeipzigList.getLength() > 0) {
                     for (int i = 0; i < itemInSimilarsLeipzigList.getLength(); i++) {
                         Element itemInSimilarsElementLeipzig = (Element) itemInSimilarsLeipzigList.item(i);
-                        String similarAsinLeipzig = itemInSimilarsElementLeipzig.getElementsByTagName("asin").item(0).getTextContent();
+                        String similarAsinLeipzig = itemInSimilarsElementLeipzig.getElementsByTagName("asin").item(0)
+                                .getTextContent();
                         similarsStatement.setString(1, asin);
                         similarsStatement.setString(2, similarAsinLeipzig);
                         similarsStatement.executeUpdate();
