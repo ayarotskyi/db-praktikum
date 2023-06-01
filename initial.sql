@@ -9,7 +9,6 @@ CREATE TABLE Filliale(
   FStreet VARCHAR(255),
   FZip VARCHAR(10),
   PRIMARY KEY (FName, FStreet, FZip)
-
 );
 
 
@@ -19,7 +18,7 @@ CREATE TABLE Product (
   Salesrank INT NOT NULL,
   Bild VARCHAR(255)
 );
-
+CREATE INDEX product_title_idx ON Product(Title);
 
 CREATE TABLE ProductInFilliale (
   FName VARCHAR(255),
@@ -32,9 +31,9 @@ CREATE TABLE ProductInFilliale (
   PRIMARY KEY (ProductAsin, FName, FStreet, FZip),
   FOREIGN KEY (FName, FStreet, FZip) REFERENCES Filliale (FName, FStreet, FZip)
 );
-
-
-
+CREATE INDEX productinfilliale_fname_idx ON ProductInFilliale (FName);
+CREATE INDEX productinfilliale_fstreet_idx ON ProductInFilliale (FStreet);
+CREATE INDEX productinfilliale_fzip_idx ON ProductInFilliale (FZip);
 
 CREATE TABLE Book (
   BookAsin VARCHAR(255) PRIMARY KEY,
@@ -67,28 +66,28 @@ CREATE TABLE ArtistToMusic (
   artistName VARCHAR(255),
   PRIMARY KEY (MusicAsin, artistName)
 );
-
+CREATE INDEX artisttomusic_artistname_idx ON ArtistToMusic (artistName);
 
 CREATE TABLE CreatorToMusic (
   MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
   creatorName VARCHAR(255),
   PRIMARY KEY (MusicAsin, creatorName)
 );
-
+CREATE INDEX creatortomusic_creatorname_idx ON CreatorToMusic (creatorName);
 
 CREATE TABLE LabelToMusic (
   MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
   labelName VARCHAR(255),
   PRIMARY KEY (MusicAsin, labelName)
 );
-
+CREATE INDEX labeltomusic_labelname_idx ON LabelToMusic (labelName);
 
 CREATE TABLE TrackToMusic (
   MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
   trackName VARCHAR(255),
   PRIMARY KEY (MusicAsin, trackName)
 );
-
+CREATE INDEX tracktomusic_trackname_idx ON TrackToMusic (trackName);
 
 CREATE TABLE AuthorToBook (
   BookAsin VARCHAR(255) REFERENCES Book (BookAsin),
@@ -130,6 +129,7 @@ CREATE TABLE Category (
   categoryName VARCHAR(255) NOT NULL,
   parentCategory INTEGER REFERENCES Category(Id)
 );
+CREATE INDEX category_categoryname_idx ON Category (categoryName);
 CREATE UNIQUE INDEX category_2col_uni_idx ON Category (categoryName, parentCategory)
 WHERE parentCategory IS NOT NULL;
 CREATE UNIQUE INDEX category_1col_uni_idx ON Category (categoryName)
@@ -141,6 +141,8 @@ CREATE TABLE ProductToCategory (
   categoryId INTEGER REFERENCES Category (id),
   PRIMARY KEY (ProductAsin, categoryId)
 );
+CREATE INDEX producttocategory_categoryid_idx ON ProductToCategory (categoryId);
+CREATE INDEX producttocategory_productasin_idx ON ProductToCategory (ProductAsin);
 
 
 CREATE TABLE SimilarProduct (
@@ -149,13 +151,14 @@ CREATE TABLE SimilarProduct (
   PRIMARY KEY (Pnummer1, Pnummer2),
   CHECK (Pnummer1 <> Pnummer2)
 );
-
+CREATE INDEX similarproduct_pnumer1_idx ON SimilarProduct (Pnummer1);
 
 CREATE TABLE Kunde (
   Username VARCHAR(255) PRIMARY KEY,
   Kontonummer VARCHAR(255),
   Lieferadresse VARCHAR(255)
 );
+CREATE UNIQUE INDEX kunde_kontonummer_uni_idx ON Kunde (Kontonummer);
 
 CREATE TABLE Kauf (
   Username VARCHAR(255) REFERENCES Kunde (Username),
@@ -167,8 +170,11 @@ CREATE TABLE Kauf (
   PRIMARY KEY (Username, Datum, ProductAsin),
   FOREIGN KEY (FName, FStreet, FZip) REFERENCES Filliale (FName, FStreet, FZip)
 );
-
-
+CREATE INDEX kauf_username_idx ON Kauf (Username);
+CREATE INDEX kauf_productasin_idx ON Kauf (ProductAsin);
+CREATE INDEX kauf_fname_idx ON Kauf (FName);
+CREATE INDEX kauf_fstreet_idx ON Kauf (FStreet);
+CREATE INDEX kauf_fzip_idx ON Kauf (FZip);
 
 CREATE TABLE Feedback (
   Username VARCHAR(255) REFERENCES Kunde (Username),
@@ -177,6 +183,8 @@ CREATE TABLE Feedback (
   fMessage TEXT NOT NULL,
   PRIMARY KEY (Username, ProductAsin)
 );
+CREATE INDEX feedback_username_idx ON Feedback (Username);
+CREATE INDEX feedback_productasin_idx ON Feedback (ProductAsin);
 
 CREATE TABLE GuestFeedback (
   Id SERIAL PRIMARY KEY,
@@ -184,6 +192,7 @@ CREATE TABLE GuestFeedback (
   Rating INT NOT NULL,
   fMessage TEXT NOT NULL
 );
+CREATE INDEX guestfeedback_productasin_idx ON GuestFeedback (ProductAsin);
 
 CREATE TABLE Error (
   Id SERIAL PRIMARY KEY,
@@ -230,12 +239,3 @@ AFTER INSERT OR UPDATE ON GuestFeedback
 FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
 
-
-DROP VIEW product_rating;
-CREATE VIEW product_rating as (
-  SELECT ProductAsin, AVG(ratings.rating) as rating FROM Product INNER JOIN (
-  	SELECT ProductAsin, rating FROM Feedback UNION (
-  		SELECT ProductAsin,rating FROM guestfeedback
-  	)
-  ) as ratings USING (ProductAsin) GROUP BY ProductAsin
-)
