@@ -1,6 +1,8 @@
 Product(ProductAsin:PK, Title, Salesrank, Bild, Rating)
 
-ProductInFilliale ((ProductAsin, FName, FStreet, FZip):PK, State, Price, Avail, ProductAsin:FK REF Product(ProductAsin))
+Filliale((Fname, Fstreet, Fzip):PK)
+
+ProductInFilliale ((ProductAsin, FName, FStreet, FZip):PK, State, Price, Avail, ProductAsin:FK REF Product(ProductAsin), (Fname, Fstreet, Fzip):FK REF Filliale(Fname, Fstreet, Fzip))
 
 Book (BookAsin:PK, ReleaseDate, Pages, ISBN, BookAsin:FK REF Product(ProductAsin))
 
@@ -34,12 +36,12 @@ SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(ProductAsin), Pn
 
 Kunde(Username:PK, Kontonummer, Lieferadresse)
 
-Kauf((Username, Datum, ProductAsin):PK, Fname, Fstreet, Fzip, Username:FK REF KaufKunde(Username),
+Kauf((Username, Datum, ProductAsin):PK, Fname, Fstreet, Fzip, Username:FK REF Kunde(Username),
       (Fname, Fstreet, Fzip):FK REF Filliale(Fname, Fstreet, Fzip), ProductAsin:FK REF Product(ProductAsin))
 
 
 Feedback((Username, ProductAsin):PK, Rating, Message, Username:FK REF Kunde(Username), ProductAsin:FK REF Product(ProductAsin))
 
-GuestFeedback ( ID:PK, ProductAsin, Rating, fMessage ProductAsin:FK REF Product(ProductAsin))
+GuestFeedback ( (ProductAsin, Rating, fMessage) :PK ProductAsin:FK REF Product(ProductAsin))
 
 Error(Id:PK, EntityName, ErrorMessage)
