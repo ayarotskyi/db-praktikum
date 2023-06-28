@@ -28,11 +28,11 @@ LabelToMusic ((MusicAsin, LabelName):PK, MusicAsin:FK REF Music(MusicAsin))
 
 TrackToMusic ((MusicAsin, TrackName):PK, MusicAsin:FK REF Music(MusicAsin))
 
+SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(ProductAsin), Pnummer2:FK REF Product(ProductAsin))
+
 Category(ID:PK, categoryName, ParentCategory, ParentCateegory:FK REF Category(ID))
 
-ProductToCategory(ProductAsin, categoryId):PK, categoryId:FK REF Category(id), ProductAsin:FK REF Product(ProductAsin))
-
-SimilarProduct((Pnummer1, Pnummer2):PK, Pnummer1:FK REF Product(ProductAsin), Pnummer2:FK REF Product(ProductAsin))
+ProductToCategory(ProductAsin, ID):PK, ID:FK REF Category(ID), ProductAsin:FK REF Product(ProductAsin))
 
 Kunde(Username:PK, Kontonummer, Lieferadresse)
 
@@ -42,6 +42,6 @@ Kauf((Username, Datum, ProductAsin):PK, Fname, Fstreet, Fzip, Username:FK REF Ku
 
 Feedback((Username, ProductAsin):PK, Rating, Message, Username:FK REF Kunde(Username), ProductAsin:FK REF Product(ProductAsin))
 
-GuestFeedback ( (ProductAsin, Rating, fMessage) :PK ProductAsin:FK REF Product(ProductAsin))
+GuestFeedback (ID:PK, ProductAsin, Rating, fMessage, ProductAsin:FK REF Product(ProductAsin))
 
 Error(Id:PK, EntityName, ErrorMessage)

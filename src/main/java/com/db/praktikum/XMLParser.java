@@ -231,6 +231,7 @@ public class XMLParser {
 
 
         NodeList nodes = itemElement.getElementsByTagName("price");
+
         for (int i = 0; i < nodes.getLength(); i++) {
 
             String state;
