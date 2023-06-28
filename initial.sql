@@ -21,15 +21,17 @@ CREATE TABLE Product (
 CREATE INDEX product_title_idx ON Product(Title);
 
 CREATE TABLE ProductInFilliale (
-  FName VARCHAR(255),
-  FStreet VARCHAR(255),
-  FZip VARCHAR(10),
-  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  ProductInFillialeId SERIAL PRIMARY KEY,
+  FName VARCHAR(255) NOT NULL ,
+  FStreet VARCHAR(255) NOT NULL ,
+  FZip VARCHAR(10) NOT NULL ,
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) on delete cascade on update cascade ,
   IState VARCHAR(255) NOT NULL,
-  Price VARCHAR(255),
+  Price DECIMAL(10, 2),
+  Cur VARCHAR(10),
   Avail BOOLEAN NOT NULL,
-  PRIMARY KEY (ProductAsin, FName, FStreet, FZip),
-  FOREIGN KEY (FName, FStreet, FZip) REFERENCES Filliale (FName, FStreet, FZip)
+  UNIQUE (ProductAsin, FName, FStreet, FZip, IState),
+  FOREIGN KEY (FName, FStreet, FZip) REFERENCES Filliale (FName, FStreet, FZip) on delete cascade on update cascade
 );
 CREATE INDEX productinfilliale_fname_idx ON ProductInFilliale (FName);
 CREATE INDEX productinfilliale_fstreet_idx ON ProductInFilliale (FStreet);
@@ -62,63 +64,63 @@ CREATE TABLE Music (
 
 
 CREATE TABLE ArtistToMusic (
-  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   artistName VARCHAR(255),
   PRIMARY KEY (MusicAsin, artistName)
 );
 CREATE INDEX artisttomusic_artistname_idx ON ArtistToMusic (artistName);
 
 CREATE TABLE CreatorToMusic (
-  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   creatorName VARCHAR(255),
   PRIMARY KEY (MusicAsin, creatorName)
 );
 CREATE INDEX creatortomusic_creatorname_idx ON CreatorToMusic (creatorName);
 
 CREATE TABLE LabelToMusic (
-  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   labelName VARCHAR(255),
   PRIMARY KEY (MusicAsin, labelName)
 );
 CREATE INDEX labeltomusic_labelname_idx ON LabelToMusic (labelName);
 
 CREATE TABLE TrackToMusic (
-  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin),
+  MusicAsin VARCHAR(255) REFERENCES Music (MusicAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   trackName VARCHAR(255),
   PRIMARY KEY (MusicAsin, trackName)
 );
 CREATE INDEX tracktomusic_trackname_idx ON TrackToMusic (trackName);
 
 CREATE TABLE AuthorToBook (
-  BookAsin VARCHAR(255) REFERENCES Book (BookAsin),
+  BookAsin VARCHAR(255) REFERENCES Book (BookAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   authorName VARCHAR(255),
   PRIMARY KEY (BookAsin, authorName)
 );
 
 
 CREATE TABLE PublisherToBook (
-  BookAsin VARCHAR(255) REFERENCES Book (BookAsin),
+  BookAsin VARCHAR(255) REFERENCES Book (BookAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   publisherName VARCHAR(255),
   PRIMARY KEY (BookAsin, publisherName)
 );
 
 
 CREATE TABLE ActorToDVD (
-  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   actorName VARCHAR(255),
   PRIMARY KEY (DVDAsin, actorName)
 );
 
 
 CREATE TABLE CreatorToDVD (
-  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   creatorName VARCHAR(255),
   PRIMARY KEY (DVDAsin, creatorName)
 );
 
 
 CREATE TABLE DirectorToDVD (
-  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin),
+  DVDAsin VARCHAR(255) REFERENCES DVD (DVDAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   directorName VARCHAR(255),
   PRIMARY KEY (DVDAsin, directorName)
 );
@@ -127,7 +129,7 @@ CREATE TABLE DirectorToDVD (
 CREATE TABLE Category (
   Id SERIAL PRIMARY KEY,
   categoryName VARCHAR(255) NOT NULL,
-  parentCategory INTEGER REFERENCES Category(Id)
+  parentCategory INTEGER REFERENCES Category(Id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE INDEX category_categoryname_idx ON Category (categoryName);
 CREATE UNIQUE INDEX category_2col_uni_idx ON Category (categoryName, parentCategory)
@@ -137,8 +139,8 @@ WHERE parentCategory IS NULL;
 
 
 CREATE TABLE ProductToCategory (
-  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
-  categoryId INTEGER REFERENCES Category (id),
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
+  categoryId INTEGER REFERENCES Category (id) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (ProductAsin, categoryId)
 );
 CREATE INDEX producttocategory_categoryid_idx ON ProductToCategory (categoryId);
@@ -146,8 +148,8 @@ CREATE INDEX producttocategory_productasin_idx ON ProductToCategory (ProductAsin
 
 
 CREATE TABLE SimilarProduct (
-  Pnummer1 VARCHAR(255) REFERENCES Product (ProductAsin),
-  Pnummer2 VARCHAR(255) REFERENCES Product (ProductAsin),
+  Pnummer1 VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
+  Pnummer2 VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (Pnummer1, Pnummer2),
   CHECK (Pnummer1 <> Pnummer2)
 );
@@ -161,24 +163,18 @@ CREATE TABLE Kunde (
 CREATE UNIQUE INDEX kunde_kontonummer_uni_idx ON Kunde (Kontonummer);
 
 CREATE TABLE Kauf (
-  Username VARCHAR(255) REFERENCES Kunde (Username),
-  FName VARCHAR(255),
-  FStreet VARCHAR(255),
-  FZip VARCHAR(255),
-  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  Username VARCHAR(255) REFERENCES Kunde (Username) ON DELETE CASCADE ON UPDATE CASCADE,
   Datum TIMESTAMP NOT NULL CHECK (Datum <= CURRENT_TIMESTAMP),
-  PRIMARY KEY (Username, Datum, ProductAsin),
-  FOREIGN KEY (FName, FStreet, FZip) REFERENCES Filliale (FName, FStreet, FZip)
+  ProductInFillialeId SERIAL REFERENCES  ProductInFilliale(ProductInFillialeId) ON DELETE CASCADE ON UPDATE CASCADE,
+  PRIMARY KEY (Username, Datum, ProductInFillialeId)
 );
 CREATE INDEX kauf_username_idx ON Kauf (Username);
-CREATE INDEX kauf_productasin_idx ON Kauf (ProductAsin);
-CREATE INDEX kauf_fname_idx ON Kauf (FName);
-CREATE INDEX kauf_fstreet_idx ON Kauf (FStreet);
-CREATE INDEX kauf_fzip_idx ON Kauf (FZip);
+CREATE INDEX kauf_pr_in_filliale_idx ON Kauf (ProductInFillialeId);
+
 
 CREATE TABLE Feedback (
-  Username VARCHAR(255) REFERENCES Kunde (Username),
-  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  Username VARCHAR(255) REFERENCES Kunde (Username) ON DELETE CASCADE ON UPDATE CASCADE,
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   Rating INT NOT NULL CHECK (Rating >= 1 AND Rating <= 5),
   fMessage TEXT NOT NULL,
   PRIMARY KEY (Username, ProductAsin)
@@ -188,7 +184,7 @@ CREATE INDEX feedback_productasin_idx ON Feedback (ProductAsin);
 
 CREATE TABLE GuestFeedback (
   Id SERIAL PRIMARY KEY,
-  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin),
+  ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   Rating INT NOT NULL,
   fMessage TEXT NOT NULL
 );
@@ -202,7 +198,6 @@ CREATE TABLE Error (
 
 --Calculating Rating
 ALTER TABLE Product ADD COLUMN Rating DECIMAL(4,2);
-
 
 CREATE OR REPLACE FUNCTION updateProductRating()
 RETURNS TRIGGER AS $$
@@ -218,7 +213,7 @@ BEGIN
       SELECT rating
       FROM GuestFeedback
       WHERE ProductAsin = NEW.ProductAsin
-    ) AS subquery
+    ) AS tmp
   )
   WHERE ProductAsin = NEW.ProductAsin;
 
@@ -226,16 +221,48 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-
 CREATE TRIGGER update_product_rating
 AFTER INSERT OR UPDATE ON Feedback
 FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
 
-
 CREATE TRIGGER update_product_rating_guest
 AFTER INSERT OR UPDATE ON GuestFeedback
 FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
+
+
+
+CREATE OR REPLACE FUNCTION deleteInvalidProducts()
+    RETURNS VOID AS $$
+BEGIN
+    -- Delete products from Product table that are not present in Book, DVD, or Music
+    DELETE FROM Product
+    WHERE ProductAsin NOT IN (
+        SELECT p.ProductAsin
+        FROM Book b JOIN Product p ON b.BookAsin = p.ProductAsin
+        UNION
+        SELECT p.ProductAsin
+        FROM DVD d JOIN Product p ON d.DVDAsin = p.ProductAsin
+        UNION
+        SELECT p.ProductAsin
+        FROM Music m JOIN Product p ON m.MusicAsin = p.ProductAsin
+    );
+
+    -- Delete products from ProductInFilliale table that are not present in Book, DVD, or Music
+    DELETE FROM ProductInFilliale
+    WHERE ProductAsin NOT IN (
+        SELECT p.ProductAsin
+        FROM Book b JOIN Product p ON b.BookAsin = p.ProductAsin
+        UNION
+        SELECT p.ProductAsin
+        FROM DVD d JOIN Product p ON d.DVDAsin = p.ProductAsin
+        UNION
+        SELECT p.ProductAsin
+        FROM Music m JOIN Product p ON m.MusicAsin = p.ProductAsin
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
 

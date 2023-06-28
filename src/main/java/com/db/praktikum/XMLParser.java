@@ -40,6 +40,12 @@ public class XMLParser {
 
             FeedbackParser.parse(connection);
 
+            //Delete not suitable products
+            String sqlFunction = "SELECT deleteInvalidProducts()";
+            Statement statement = connection.createStatement();
+            statement.execute(sqlFunction);
+            System.out.println("Excess products deleted successfully.");
+
             connection.close();
             System.out.println("Data inserted successfully.");
 
@@ -148,7 +154,7 @@ public class XMLParser {
         String zip = shopElement.getAttribute("zip");
 
         String query = "INSERT INTO Filliale (FName, FStreet, FZip) VALUES (?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query);) {
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
 
             statement.setString(1, name);
             statement.setString(2, street);
@@ -222,45 +228,59 @@ public class XMLParser {
         String productAsin = itemElement.getAttribute("asin");
 
         // State check
-        String state;
-        Element priceElement = (Element) itemElement.getElementsByTagName("price").item(0);
-        if (!priceElement.getAttribute("state").isEmpty()) {
-            state = priceElement.getAttribute("state");
-        } else {
-            throw new AttributeNotFoundException("State");
-        }
 
-        // Calculating Price
-        String price = null;
-        String priceValue = priceElement.getTextContent();
-        String mult = priceElement.getAttribute("mult");
-        String currency = priceElement.getAttribute("currency");
-        if (!priceValue.isEmpty() && Integer.parseInt(priceValue) > 0 && !mult.isEmpty() && !currency.isEmpty()) {
-            double tmp = Double.parseDouble(mult) * Integer.parseInt(priceValue);
-            String formattedPrice = String.format("%.2f", tmp);
-            price = formattedPrice + " " + currency;
-        }
 
-        // Setting Avail
-        boolean avail;
-        if (price != null) {
-            avail = true;
-        } else {
-            avail = false;
-        }
+        NodeList nodes = itemElement.getElementsByTagName("price");
+        for (int i = 0; i < nodes.getLength(); i++) {
 
-        String query = "INSERT INTO ProductInFilliale (ProductAsin, Fname, Fstreet, Fzip, IState, Price, Avail) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, productAsin);
-            statement.setString(2, shopName);
-            statement.setString(3, shopStreet);
-            statement.setString(4, shopZip);
-            statement.setString(5, state);
-            statement.setString(6, price);
-            statement.setBoolean(7, avail);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
+            String state;
+            Element priceElement = (Element) itemElement.getElementsByTagName("price").item(i);
+
+
+            if (!priceElement.getAttribute("state").isEmpty()) {
+                state = priceElement.getAttribute("state");
+            } else {
+                throw new AttributeNotFoundException("State");
+            }
+
+            // Calculating Price
+            Double price = null;
+            String priceValue = priceElement.getTextContent();
+            String mult = priceElement.getAttribute("mult");
+            String currency = priceElement.getAttribute("currency");
+            if (!priceValue.isEmpty() && Integer.parseInt(priceValue) > 0 && !mult.isEmpty() && !currency.isEmpty()) {
+                price = Double.parseDouble(mult) * Integer.parseInt(priceValue);
+            }
+
+
+            // Setting Avail
+            boolean avail;
+            if (price != null) {
+                avail = true;
+            } else {
+                avail = false;
+                currency = null;
+            }
+
+            String query = "INSERT INTO ProductInFilliale (ProductAsin, Fname, Fstreet, Fzip, IState, Price, Cur, Avail) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setString(1, productAsin);
+                statement.setString(2, shopName);
+                statement.setString(3, shopStreet);
+                statement.setString(4, shopZip);
+                statement.setString(5, state);
+
+                if(price != null)
+                    statement.setDouble(6, price);
+                else
+                    statement.setNull(6, Types.DOUBLE);
+
+                statement.setString(7, currency);
+                statement.setBoolean(8, avail);
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw e;
+            }
         }
     }
 
