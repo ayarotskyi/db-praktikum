@@ -176,6 +176,7 @@ CREATE TABLE Feedback (
   Username VARCHAR(255) REFERENCES Kunde (Username) ON DELETE CASCADE ON UPDATE CASCADE,
   ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   Rating INT NOT NULL CHECK (Rating >= 1 AND Rating <= 5),
+  Helpful INT NOT NULL,
   fMessage TEXT NOT NULL,
   PRIMARY KEY (Username, ProductAsin)
 );
@@ -186,6 +187,7 @@ CREATE TABLE GuestFeedback (
   Id SERIAL PRIMARY KEY,
   ProductAsin VARCHAR(255) REFERENCES Product (ProductAsin) ON DELETE CASCADE ON UPDATE CASCADE,
   Rating INT NOT NULL,
+  Helpful INT NOT NULL,
   fMessage TEXT NOT NULL
 );
 CREATE INDEX guestfeedback_productasin_idx ON GuestFeedback (ProductAsin);
@@ -222,14 +224,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_product_rating
-AFTER INSERT OR UPDATE ON Feedback
-FOR EACH ROW
+    AFTER INSERT OR UPDATE OR DELETE ON Feedback
+    FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
 
 CREATE TRIGGER update_product_rating_guest
-AFTER INSERT OR UPDATE ON GuestFeedback
-FOR EACH ROW
+    AFTER INSERT OR UPDATE OR DELETE ON GuestFeedback
+    FOR EACH ROW
 EXECUTE FUNCTION updateProductRating();
+
 
 
 

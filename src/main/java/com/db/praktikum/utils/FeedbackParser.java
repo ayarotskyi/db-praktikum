@@ -30,25 +30,27 @@ public class FeedbackParser {
                         userStatement.executeUpdate();
 
                         PreparedStatement feedbackStatement = connection.prepareStatement(
-                                "INSERT INTO Feedback (Username, ProductAsin, Rating, fMessage) " +
-                                        "VALUES (?, ?, ?, ?)");
+                                "INSERT INTO Feedback (Username, ProductAsin, Rating, fMessage, Helpful) " +
+                                        "VALUES (?, ?, ?, ?, ?)");
 
                         // Insert feedback information into the corresponding table
                         feedbackStatement.setString(1, usernameValue);
                         feedbackStatement.setString(2, line[0]); // "product" column
                         feedbackStatement.setInt(3, Integer.parseInt(line[1])); // "rating" column
                         feedbackStatement.setString(4, line[6]); // "content" column
+                        feedbackStatement.setInt(5, Integer.parseInt(line[2]));
                         feedbackStatement.executeUpdate();
                         continue;
                     }
 
                     PreparedStatement guestFeedbackStatement = connection.prepareStatement(
-                            "INSERT INTO GuestFeedback (ProductAsin, Rating, fMessage) " +
-                                    "VALUES (?, ?, ?)");
+                            "INSERT INTO GuestFeedback (ProductAsin, Rating, fMessage, Helpful) " +
+                                    "VALUES (?, ?, ?, ?)");
 
                     guestFeedbackStatement.setString(1, line[0]); // "product" column
                     guestFeedbackStatement.setInt(2, Integer.parseInt(line[1])); // "rating" column
                     guestFeedbackStatement.setString(3, line[6]); // "content" column
+                    guestFeedbackStatement.setInt(4, Integer.parseInt(line[2]));
                     guestFeedbackStatement.executeUpdate();
                 } catch (Exception e) {
                     ErrorHandler.handleError(connection, isGuest ? "GuestFeedback" : "Feedback", e);
