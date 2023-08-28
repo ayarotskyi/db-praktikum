@@ -30,6 +30,8 @@ public class App {
             
             System.out.print("Enter 1 to get information about selected product.\n" +
                     "Enter 2 to find all products with given pattern.\n" +
+                    "Enter 5 to find all top 'k' products.\n" +
+                    "Enter 6 to find all similar cheaper products.\n" +
                     "Enter 8 to find all Trolls.\n" +
                     "Enter 9 to get all offers for given Product ID.\n" +
                     "Enter \"exit\" to finish session.\n" +
@@ -48,12 +50,16 @@ public class App {
                     break;
                 }
                 case "3":{
-                    test();
-                    break;
                 }
                 case "4":{}
-                case "5":{}
-                case "6":{}
+                case "5":{
+                    getTopProducts();
+                    break;
+                }
+                case "6":{
+                    getSimilarCheaperProduct();
+                    break;
+                }
                 case "7":{}
                 case "8":{
                     getTrolls();
@@ -160,6 +166,62 @@ public class App {
         }
     }
 
+    public static void getTopProducts(){
+
+        while(true){
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter the number 'k'. After that will be shown top k products depending on their rating.\n"
+                    + "Type \"exit\" to return to main menu\n"
+                    + "Your input: ");
+            String choice = scanner.nextLine();
+
+            if(choice.equals("exit")){
+                System.out.println();
+                break;
+            }
+
+            try {
+                int tmp = Integer.parseInt(choice);
+                if(tmp < 0){
+                    System.out.println("Number can not be negative, try again!\n");
+                    continue;
+                }
+            }catch (Exception e){
+                System.out.println("That was not a number, try again! \n");
+                continue;
+            }
+
+
+            String hql = "select p.ProductAsin FROM Product p WHERE Rating <> null order by Rating desc, ProductAsin desc";
+            Query<String> query = session.createQuery(hql, String.class).setMaxResults(Integer.parseInt(choice));
+            List<String> result = query.getResultList();
+            System.out.println(result.toString() + "\n");
+        }
+
+    }
+
+    public static void getSimilarCheaperProduct(){
+
+        while(true){
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter ProductID to get all similar cheaper products or type \"exit\" to return to main menu \n" + "Your input: ");
+            String choice = scanner.nextLine();
+
+            if(choice.equals("exit")){
+                System.out.println();
+                break;
+            }
+
+            String hql = "SELECT pif.productAsin.ProductAsin " +
+                    "FROM  SimilarProduct sp JOIN ProductInFilliale pif on sp.similarProduct.pnummer2.ProductAsin = pif.productAsin.ProductAsin " +
+                    "WHERE sp.similarProduct.pnummer1.ProductAsin = :userInput " +
+                    "AND pif.price < (select pif2.price from ProductInFilliale pif2 where pif2.productAsin.ProductAsin = :userInput )" ;
+            Query<String> query = session.createQuery(hql, String.class).setParameter("userInput",choice);
+            List<String> result = query.getResultList();
+            System.out.println(result);
+        }
+    }
+
     public static void getTrolls(){
 
         while(true){
@@ -195,7 +257,7 @@ public class App {
         while(true){
 
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter ProductID to get all available offers t or type \"exit\" to return to main menu \n" + "Your input: ");
+            System.out.print("Enter ProductID to get all available offers or type \"exit\" to return to main menu \n" + "Your input: ");
             String choice = scanner.nextLine();
 
             if(choice.equals("exit")){

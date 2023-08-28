@@ -20,7 +20,7 @@ public class Product implements Serializable {
     private String Bild;
 
     @Column(name = "Rating")
-    private Double rating;
+    private Double Rating;
 
     public String getProductAsin() {
         return ProductAsin;
@@ -35,7 +35,7 @@ public class Product implements Serializable {
         return Bild;
     }
     public Double getRating() {
-        return rating;
+        return Rating;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class Product implements Serializable {
                 ", Title='" + Title + '\'' +
                 ", Salesrank=" + Salesrank +
                 ", Bild='" + Bild + '\'' +
-                ", rating=" + rating +
+                ", rating=" + Rating +
                 '}';
     }
 }
