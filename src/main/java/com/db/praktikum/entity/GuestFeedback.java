@@ -7,7 +7,7 @@ import javax.persistence.*;
 @Table(name = "GuestFeedback")
 public class GuestFeedback {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Id")
     private Long id;
 
@@ -24,6 +24,7 @@ public class GuestFeedback {
     @Column(name = "fMessage")
     private String fMessage;
 
+
     public Long getId() {
         return id;
     }
@@ -36,22 +37,29 @@ public class GuestFeedback {
         return rating;
     }
 
-    public Integer getHelpful() {
-        return helpful;
-    }
 
     public String getfMessage() {
         return fMessage;
     }
 
+    public void setProductAsin(Product productAsin) {
+        this.productAsin = productAsin;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public void setfMessage(String fMessage) {
+        this.fMessage = fMessage;
+    }
+
+    public void setHelpful(Integer helpful) {
+        this.helpful = helpful;
+    }
+
     @Override
     public String toString() {
-        return "GuestFeedback{" +
-                "id=" + id +
-                ", productAsin=" + productAsin.getProductAsin() +
-                ", rating=" + rating +
-                ", helpful=" + helpful +
-                ", fMessage='" + fMessage + '\'' +
-                '}';
+        return "guest" + " about Product:" + getProductAsin() + " = [" + getfMessage() + "]";
     }
 }

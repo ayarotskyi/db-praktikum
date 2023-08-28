@@ -36,23 +36,33 @@ public class Feedback {
         return rating;
     }
 
-    public Integer getHelpful() {
-        return helpful;
-    }
 
     public String getfMessage() {
         return fMessage;
     }
 
+    public void setFeedbackPK(Kunde username,Product productAsin) {
+        FeedbackPK feedbackPK = new FeedbackPK();
+        feedbackPK.setUsername(username);
+        feedbackPK.setProductAsin(productAsin);
+        this.feedbackPK = feedbackPK;
+    }
+
+    public void setHelpful(Integer helpful) {
+        this.helpful = helpful;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public void setfMessage(String fMessage) {
+        this.fMessage = fMessage;
+    }
+
     @Override
     public String toString() {
-        return "Feedback{" +
-                "username=" + feedbackPK.getUsername() +
-                ", productAsin=" + feedbackPK.getProductAsin() +
-                ", rating=" + rating +
-                ", helpful=" + helpful +
-                ", fMessage='" + fMessage + '\'' +
-                '}';
+        return "User: " + feedbackPK.getUsername() + " about Product: " + feedbackPK.getProductAsin() + " => [" + getfMessage() + "]";
     }
 }
 
@@ -72,8 +82,15 @@ class FeedbackPK implements Serializable {
         return username.getUsername();
     }
 
-
     public String getProductAsin() {
         return productAsin.getProductAsin();
+    }
+
+    public void setUsername(Kunde username) {
+        this.username = username;
+    }
+
+    public void setProductAsin(Product productAsin) {
+        this.productAsin = productAsin;
     }
 }

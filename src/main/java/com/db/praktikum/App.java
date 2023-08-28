@@ -1,9 +1,12 @@
 package com.db.praktikum;
 import com.db.praktikum.entity.*;
+import com.db.praktikum.utils.AttributeNotFoundException;
 import com.db.praktikum.utils.HibernateUtil;
+import com.db.praktikum.utils.ReviewsWindow;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.util.*;
@@ -19,7 +22,6 @@ public class App {
 
     public static void main( String[] args ){
 
-
         init();
         System.out.println("Hello, welcome to Database Application.");
         boolean isRunning = true;
@@ -32,6 +34,7 @@ public class App {
                     "Enter 2 to find all products with given pattern.\n" +
                     "Enter 5 to find all top 'k' products.\n" +
                     "Enter 6 to find all similar cheaper products.\n" +
+                    "Enter 7 to access reviews UI.\n" +
                     "Enter 8 to find all Trolls.\n" +
                     "Enter 9 to get all offers for given Product ID.\n" +
                     "Enter \"exit\" to finish session.\n" +
@@ -60,7 +63,11 @@ public class App {
                     getSimilarCheaperProduct();
                     break;
                 }
-                case "7":{}
+                case "7":{
+                    ReviewsWindow reviewsWindow = new ReviewsWindow();
+                    reviewsWindow.setVisible(true);
+                    break;
+                }
                 case "8":{
                     getTrolls();
                     break;
@@ -76,7 +83,7 @@ public class App {
                  break;
                 }
                 default:{
-                    System.out.println("Invalid input, try again!\n");
+                    System.out.println("Invalid command, try again!\n");
                     break;
                 }
             }
@@ -84,17 +91,6 @@ public class App {
         }
         mainScanner.close();
         finish();
-    }
-
-    public static void test(){
-        String hql = "FROM GuestFeedback ";
-        Query<GuestFeedback> query = session.createQuery(hql, GuestFeedback.class);
-        List<GuestFeedback> list = query.getResultList();
-
-        for(GuestFeedback k : list)
-            System.out.println(k.toString());
-
-        System.out.println(list.size());
     }
 
     public static void init(){
@@ -221,6 +217,70 @@ public class App {
             System.out.println(result);
         }
     }
+
+    public static List<String> readReviews(){
+        String hql = "FROM Feedback";
+        Query<Feedback> query = session.createQuery(hql, Feedback.class);
+        List<Feedback> result = query.getResultList();
+
+        String hqlGuest = "FROM GuestFeedback";
+        Query<GuestFeedback> queryGuest = session.createQuery(hqlGuest, GuestFeedback.class);
+        List<GuestFeedback> resultGuest = queryGuest.getResultList();
+
+        List<String> reviews = new ArrayList<>();
+        for(Feedback tmp : result){
+            reviews.add(tmp.toString());
+        }
+        for(GuestFeedback tmp : resultGuest){
+            reviews.add(tmp.toString());
+        }
+
+        return reviews;
+    } //USED IN ReviewsWindow
+
+    public static void writeReviews(int rating, String message, String productAsin, String user){
+
+        Transaction transaction;
+        Product product = session.get(Product.class, productAsin);
+        if(product == null)
+            return;
+
+
+        if(user.equals("")){
+            transaction = session.beginTransaction();
+            try{
+                GuestFeedback guestFeedback = new GuestFeedback();
+                guestFeedback.setfMessage(message);
+                guestFeedback.setProductAsin(product);
+                guestFeedback.setRating(rating);
+                guestFeedback.setHelpful(null);
+                session.save(guestFeedback);
+                transaction.commit();
+            }catch (Exception e){
+                if(transaction != null)
+                    transaction.rollback();
+                System.out.println(e.getMessage());
+            }
+        }else{
+            transaction = session.beginTransaction();
+            Kunde kunde = session.get(Kunde.class, user);
+            if(kunde != null) {
+                try{
+                    Feedback feedback = new Feedback();
+                    feedback.setfMessage(message);
+                    feedback.setFeedbackPK(kunde, product);
+                    feedback.setRating(rating);
+                    feedback.setHelpful(null);
+                    session.save(feedback);
+                    transaction.commit();
+                }catch (Exception e){
+                    if(transaction != null)
+                        transaction.rollback();
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+    } //USED IN ReviewsWindow
 
     public static void getTrolls(){
 

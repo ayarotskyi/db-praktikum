@@ -6,7 +6,7 @@ import java.io.Serializable;
 @Table(name = "Product")
 public class Product implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ProductAsin")
     private String ProductAsin;
 
@@ -36,6 +36,10 @@ public class Product implements Serializable {
     }
     public Double getRating() {
         return Rating;
+    }
+
+    public void setProductAsin(String productAsin) {
+        ProductAsin = productAsin;
     }
 
     @Override
