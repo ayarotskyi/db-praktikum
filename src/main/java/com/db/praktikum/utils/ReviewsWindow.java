@@ -7,7 +7,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.Objects;
 
 public class ReviewsWindow extends JFrame {
     private JTextArea reviewsTextArea;
@@ -19,9 +18,7 @@ public class ReviewsWindow extends JFrame {
         setSize(1280, 720);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-
         JPanel mainPanel = new JPanel(new BorderLayout());
-
 
         reviewsTextArea = new JTextArea();
         reviewsTextArea.setEditable(false);
@@ -29,7 +26,6 @@ public class ReviewsWindow extends JFrame {
         reviewsTextArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(reviewsTextArea);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
 
         JPanel buttonPanel = new JPanel();
         addReviewButton = new JButton("Add New Review");
@@ -42,11 +38,6 @@ public class ReviewsWindow extends JFrame {
 
         refreshReviews(App.readReviews());
 
-
-
-
-
-
         addReviewButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -58,7 +49,7 @@ public class ReviewsWindow extends JFrame {
                     String message = dialog.getMessage();
                     int rating = dialog.getRating();
 
-                    App.writeReviews(rating,message,productID,usernameOrGuest);
+                    App.writeReviews(rating, message, productID, usernameOrGuest);
                 }
 
             }
@@ -98,7 +89,7 @@ class ReviewEntryDialog extends JDialog {
         usernameOrGuestField = new JTextField();
         productIDField = new JTextField();
         messageTextArea = new JTextArea();
-        ratingComboBox = new JComboBox<>(new Integer[]{1, 2, 3, 4, 5});
+        ratingComboBox = new JComboBox<>(new Integer[] { 1, 2, 3, 4, 5 });
         JButton saveButton = new JButton("Save");
 
         mainPanel.add(new JLabel("Username/Guest:"));
