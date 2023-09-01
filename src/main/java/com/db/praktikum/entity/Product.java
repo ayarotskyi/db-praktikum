@@ -1,4 +1,5 @@
 package com.db.praktikum.entity;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
@@ -25,21 +26,41 @@ public class Product implements Serializable {
     public String getProductAsin() {
         return ProductAsin;
     }
+
     public String getTitle() {
         return Title;
     }
+
     public int getSalesrank() {
         return Salesrank;
     }
+
     public String getBild() {
         return Bild;
     }
+
     public Double getRating() {
         return Rating;
     }
 
     public void setProductAsin(String productAsin) {
         ProductAsin = productAsin;
+    }
+
+    public void setBild(String bild) {
+        Bild = bild;
+    }
+
+    public void setRating(Double rating) {
+        Rating = rating;
+    }
+
+    public void setSalesrank(int salesrank) {
+        Salesrank = salesrank;
+    }
+
+    public void setTitle(String title) {
+        Title = title;
     }
 
     @Override
@@ -53,5 +74,3 @@ public class Product implements Serializable {
                 '}';
     }
 }
-
-

@@ -8,6 +8,7 @@ import com.db.praktikum.utils.ReviewsWindow;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 
 import java.util.*;
@@ -19,18 +20,21 @@ public class App {
     static String green = "\u001B[32m";
     static String reset = "\u001B[0m";
 
+    static Scanner scanner;
+
     public static void main(String[] args) {
 
         init();
         System.out.println("Hello, welcome to Database Application.");
         boolean isRunning = true;
-        Scanner mainScanner = new Scanner(System.in);
+        scanner = new Scanner(System.in);
 
         while (isRunning) {
 
             System.out.print("Enter 1 to get information about selected product.\n" +
                     "Enter 2 to find all products with given pattern.\n" +
                     "Enter 3 to show the tree of all categories.\n" +
+                    "Enter 4 to get a list of products by category path\n" +
                     "Enter 5 to find all top 'k' products.\n" +
                     "Enter 6 to find all similar cheaper products.\n" +
                     "Enter 7 to access reviews UI.\n" +
@@ -38,7 +42,7 @@ public class App {
                     "Enter 9 to get all offers for given Product ID.\n" +
                     "Enter \"exit\" to finish session.\n" +
                     "Enter your choice: ");
-            String option = mainScanner.nextLine();
+            String option = scanner.nextLine();
             System.out.println();
 
             switch (option) {
@@ -56,6 +60,8 @@ public class App {
                     break;
                 }
                 case "4": {
+                    getProductsByCategoryPath();
+                    break;
                 }
                 case "5": {
                     getTopProducts();
@@ -91,7 +97,7 @@ public class App {
             }
 
         }
-        mainScanner.close();
+        scanner.close();
         finish();
 
     }
@@ -107,7 +113,6 @@ public class App {
 
     public static void getProduct() {
         while (true) {
-            Scanner scanner = new Scanner(System.in);
             System.out.print(
                     "Enter ProductID to get information about selected product or type \"exit\" to return to main menu \n"
                             + "Your input: ");
@@ -126,14 +131,11 @@ public class App {
             } catch (Exception e) {
                 System.out.println("Product with this ID does not exist or invalid command, try again!\n");
             }
-            scanner.close();
         }
     }
 
     public static void getProducts() {
-
         while (true) {
-            Scanner scanner = new Scanner(System.in);
             System.out.print("Enter pattern to find all matching products or type \"exit\" to return to main menu \n"
                     + "Your input: ");
             String choice = scanner.nextLine();
@@ -162,18 +164,55 @@ public class App {
                     System.out.println(product.toString());
                 System.out.println();
             }
-            scanner.close();
         }
     }
 
-    public static void getCategoryTree() {
+    public static void getProductsByCategoryPath() {
+        while (true) {
+            System.out
+                    .print("Enter the category path.\n"
+                            + "Type \"exit\" to return to main menu\n"
+                            + "Your input: ");
+            String choice = scanner.nextLine();
 
+            if (choice.equals("exit")) {
+                System.out.println();
+                break;
+            }
+
+            NativeQuery query = session.createNativeQuery("WITH RECURSIVE cte AS (\r\n" + //
+                    "     SELECT id, categoryname, parentcategory, categoryname as categories\r\n" + //
+                    "     FROM category\r\n" + //
+                    "     WHERE parentcategory is null\r\n" + //
+                    "     UNION ALL\r\n" + //
+                    "     SELECT c.id, c.categoryname, c.parentcategory, CAST((ct.categories || '/' || c.categoryname) as varchar(255))\r\n"
+                    + //
+                    "     FROM cte ct JOIN\r\n" + //
+                    "          category c\r\n" + //
+                    "          ON c.parentcategory = ct.id\r\n" + //
+                    "    )\r\n" + //
+                    "SELECT * FROM cte JOIN producttocategory ON id = categoryid NATURAL JOIN product WHERE categories LIKE '"
+                    + choice + "%'");
+            List<Object[]> rows = query.getResultList();
+            if (rows.isEmpty()) {
+                System.out.println("Products with given path do not exist!\n");
+            } else {
+                for (Object[] row : rows) {
+                    Product product = new Product();
+                    product.setProductAsin(row[0].toString());
+                    product.setTitle(row[6].toString());
+                    product.setSalesrank(Integer.parseInt(row[7].toString()));
+                    product.setBild(row[8].toString());
+                    product.setRating(row[9] != null ? Double.parseDouble(row[9].toString()) : null);
+                    System.out.println(product.toString());
+                }
+                System.out.println();
+            }
+        }
     }
 
     public static void getTopProducts() {
-
         while (true) {
-            Scanner scanner = new Scanner(System.in);
             System.out
                     .print("Enter the number 'k'. After that will be shown top k products depending on their rating.\n"
                             + "Type \"exit\" to return to main menu\n"
@@ -200,15 +239,11 @@ public class App {
             Query<String> query = session.createQuery(hql, String.class).setMaxResults(Integer.parseInt(choice));
             List<String> result = query.getResultList();
             System.out.println(result.toString() + "\n");
-            scanner.close();
         }
-
     }
 
     public static void getSimilarCheaperProduct() {
-
         while (true) {
-            Scanner scanner = new Scanner(System.in);
             System.out.print(
                     "Enter ProductID to get all similar cheaper products or type \"exit\" to return to main menu \n"
                             + "Your input: ");
@@ -227,7 +262,6 @@ public class App {
             Query<String> query = session.createQuery(hql, String.class).setParameter("userInput", choice);
             List<String> result = query.getResultList();
             System.out.println(result);
-            scanner.close();
         }
     }
 
@@ -295,9 +329,7 @@ public class App {
     } // USED IN ReviewsWindow
 
     public static void getTrolls() {
-
         while (true) {
-            Scanner scanner = new Scanner(System.in);
             System.out.print(
                     "Enter the limit value. All users with a value below limit value will be considered trolls.\n"
                             + "Type \"exit\" to return to main menu\n"
@@ -322,14 +354,11 @@ public class App {
                     Double.parseDouble(choice));
             List<String> result = query.getResultList();
             System.out.println(result.toString() + "\n");
-            scanner.close();
         }
     }
 
     public static void getOffers() {
         while (true) {
-
-            Scanner scanner = new Scanner(System.in);
             System.out.print("Enter ProductID to get all available offers or type \"exit\" to return to main menu \n"
                     + "Your input: ");
             String choice = scanner.nextLine();
@@ -351,7 +380,6 @@ public class App {
             for (ProductInFilliale product : productList)
                 System.out.println(product.toString());
             System.out.println();
-            scanner.close();
         }
     }
 }
